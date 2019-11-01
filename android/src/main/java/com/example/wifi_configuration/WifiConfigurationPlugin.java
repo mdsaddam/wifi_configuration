@@ -18,6 +18,10 @@ import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
 
+import android.text.format.Formatter;
+import java.util.HashMap; 
+import 	android.net.DhcpInfo;
+
 import androidx.core.app.ActivityCompat;
 
 import com.example.wifi_configuration.connect.ConnectionSuccessListener;
@@ -102,12 +106,12 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
             requestLocationPermission();
         } else if (Constant.methodCalled.method.equals("getWifiList")) {
             Constant.result.success(getAvailableWifiList());
-
         } else if (Constant.methodCalled.method.equals("isConnectedToWifi")) {
             Constant.result.success(isWifiConnected(Constant.methodCalled.argument("ssid")));
         } else if (Constant.methodCalled.method.equals("connectedToWifi")) {
             requestLocationPermissionForConnectedWifiName();
-
+        } else if (Constant.methodCalled.method.equals("connectedWifiInfo")) {
+            Constant.result.success(getWifiInfo());
         }
     }
 
@@ -213,12 +217,8 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
             } else {
                 Constant.result.success("Please allow location to get wifi name");
             }
-
         }
-
     }
-
-
 
     public static boolean isWifiConnected(final String wifiSsid) {
 
@@ -238,6 +238,27 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
             }
         }
         return isWifiConnect;
+    }
+
+    public static HashMap<String, String> getWifiInfo() {
+        WifiManager wifiManager = (WifiManager) Constant.context.getSystemService (Context.WIFI_SERVICE);
+        DhcpInfo dhcp = wifiManager.getDhcpInfo();
+        String gatewayAddress = Formatter.formatIpAddress(dhcp.gateway);
+
+        WifiInfo info = wifiManager.getConnectionInfo ();
+        String ssid = info.getSSID();
+        int ip = info.getIpAddress();
+        String ipAddress = Formatter.formatIpAddress(ip);
+
+        Log.d("Wifi ID", "   " + ssid);
+
+        HashMap<String, String> wifiInfo = new HashMap<String, String>();
+        if (ssid.length() > 2) {
+            wifiInfo.put("ssid", ssid);    
+            wifiInfo.put("ipAddress", ipAddress);
+            wifiInfo.put("gatewayAddress", gatewayAddress);
+        }
+        return wifiInfo;
     }
 
     private static void openAppSettings(){
@@ -292,7 +313,6 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
 
 
     public static String connectedToWifi() {
-
         WifiManager wifiManager = (WifiManager) Constant.context.getSystemService (Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo ();
         String connectedWifi = info.getSSID();
@@ -304,12 +324,8 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
                 connectedWifi = connectedWifi.replace("\"", "");
                 return (connectedWifi);
             }
-
         } else {
             return ("");
         }
-
     }
-
-
 }
