@@ -112,6 +112,8 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
             requestLocationPermissionForConnectedWifiName();
         } else if (Constant.methodCalled.method.equals("connectedWifiInfo")) {
             Constant.result.success(getWifiInfo());
+        } else if (Constant.methodCalled.method.equals("getScanWifiResult")) {
+            Constant.result.success(getScanWifiResult());
         }
     }
 
@@ -148,7 +150,6 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
 
     }
 
-
     /**
      *
      * @return
@@ -156,11 +157,11 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
     private  static List<String> getAvailableWifiList() {
         List<String> wifiList = new ArrayList<String>();
         if (wifiUtils.getScanWifiResult() != null){
-            Log.d("WifiResults-->", wifiUtils.getScanWifiResult()+"");
+            // Log.d("WifiResults-->", wifiUtils.getScanWifiResult()+"");
 
             for (ScanResult wifiName : wifiUtils.getScanWifiResult()
             ) {
-                Log.d("WifiUtils", wifiName.SSID);
+                // Log.d("WifiUtils", wifiName.SSID);
                 wifiList.add(wifiName.SSID);
             }
             return wifiList;
@@ -169,6 +170,61 @@ public class WifiConfigurationPlugin implements MethodCallHandler {
     }
 
 
+    /**
+     *
+     * @return
+     */
+    private  static List<HashMap<String, String>> getScanWifiResult() {
+        List<HashMap<String, String>> wifiList = new ArrayList<HashMap<String, String>>();
+        if (wifiUtils.getScanWifiResult() != null){
+            // Log.d("WifiResults-->", wifiUtils.getScanWifiResult()+"");
+
+            for (ScanResult wifiName : wifiUtils.getScanWifiResult()
+            ) {
+                HashMap<String, String> scanResult = new HashMap<String, String>();
+                boolean isProtected = getScanResultSecurity(wifiName) != OPEN;
+                // Log.d("IsWifiProtected", isProtected ? "It's Protected" : "It's Open");
+                
+                // Log.d("WifiUtils", wifiName.SSID);
+
+                scanResult.put("isProtected", isProtected ? "PROTECTED" : "OPEN");
+                scanResult.put("ssid", wifiName.SSID);
+                scanResult.put("bssid", wifiName.BSSID);
+                scanResult.put("capabilities", wifiName.capabilities);
+
+                wifiList.add(scanResult);
+            }
+            return wifiList;
+        }
+        return wifiList;
+    }
+
+     /**
+     * @return The security of a given {@link ScanResult}.
+     * Copied from com.android.settings.wifi.AccessPointState.java
+     * Ref: https://android.googlesource.com/platform/packages/apps/Settings/+/donut-release/src/com/android/settings/wifi/AccessPointState.java
+     */
+    // Constants used for different security types
+    public static final String WPA2 = "WPA2";
+    public static final String WPA = "WPA";
+    public static final String WEP = "WEP";
+    public static final String OPEN = "Open";
+
+    /* For EAP Enterprise fields */
+    public static final String WPA_EAP = "WPA-EAP";
+    public static final String IEEE8021X = "IEEE8021X";
+    
+    private static String getScanResultSecurity(ScanResult scanResult) {
+        final String cap = scanResult.capabilities;
+        final String[] securityModes = { WEP, WPA, WPA2, WPA_EAP, IEEE8021X };
+        for (int i = securityModes.length - 1; i >= 0; i--) {
+            if (cap.contains(securityModes[i])) {
+                return securityModes[i];
+            }
+        }
+        
+        return OPEN;
+    }
 
     private void requestLocationPermission() {
 

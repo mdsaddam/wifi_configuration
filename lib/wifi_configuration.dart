@@ -45,4 +45,10 @@ class WifiConfiguration {
         await _channel.invokeMethod('connectedWifiInfo');
     return connectedWifiInfo;
   }
+
+  static Future<List<dynamic>> getScanWifiResult() async {
+    final List<dynamic> scanResult =
+        await _channel.invokeMethod('getScanWifiResult');
+    return scanResult;
+  }
 }
